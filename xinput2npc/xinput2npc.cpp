@@ -127,7 +127,7 @@ int main()
 	{
 		wchar_t ModulePath[MAX_PATH];
 		DWORD r = ::GetModuleFileNameW(nullptr, ModulePath, MAX_PATH);
-		for (int i = r - 1; i < 4; i--) {
+		for (int i = r - 1; i > 4; i--) {
 			if (ModulePath[i] == L'\\') {
 				ModulePath[i + 1] = 0;
 				break;

@@ -7,6 +7,16 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "xinput2npc", "xinput2npc\xi
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "midiin2npcsky", "midiin2npcsky\midiin2npcsky.vcxproj", "{26C09267-EA17-4C38-A0E0-538E38FF630D}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "settings", "settings\settings.vcxproj", "{8D02F85D-7125-47C0-8DA5-C04F1A8B2A19}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "ソリューション項目", "ソリューション項目", "{43F2C4C4-2CA4-4D0B-80D6-98F590A64093}"
+	ProjectSection(SolutionItems) = preProject
+		.gitattributes = .gitattributes
+		.gitignore = .gitignore
+		user.default.props = user.default.props
+		user.release.props = user.release.props
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -31,6 +41,14 @@ Global
 		{26C09267-EA17-4C38-A0E0-538E38FF630D}.Release|x64.Build.0 = Release|x64
 		{26C09267-EA17-4C38-A0E0-538E38FF630D}.Release|x86.ActiveCfg = Release|Win32
 		{26C09267-EA17-4C38-A0E0-538E38FF630D}.Release|x86.Build.0 = Release|Win32
+		{8D02F85D-7125-47C0-8DA5-C04F1A8B2A19}.Debug|x64.ActiveCfg = Debug|x64
+		{8D02F85D-7125-47C0-8DA5-C04F1A8B2A19}.Debug|x64.Build.0 = Debug|x64
+		{8D02F85D-7125-47C0-8DA5-C04F1A8B2A19}.Debug|x86.ActiveCfg = Debug|Win32
+		{8D02F85D-7125-47C0-8DA5-C04F1A8B2A19}.Debug|x86.Build.0 = Debug|Win32
+		{8D02F85D-7125-47C0-8DA5-C04F1A8B2A19}.Release|x64.ActiveCfg = Release|x64
+		{8D02F85D-7125-47C0-8DA5-C04F1A8B2A19}.Release|x64.Build.0 = Release|x64
+		{8D02F85D-7125-47C0-8DA5-C04F1A8B2A19}.Release|x86.ActiveCfg = Release|Win32
+		{8D02F85D-7125-47C0-8DA5-C04F1A8B2A19}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

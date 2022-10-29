@@ -7,10 +7,8 @@ uint32_t TimeStamp = 0;
 union {
 	uint32_t W;
 	struct {
-		uint8_t cnt1;
-		uint8_t down : 1;
-		uint8_t up : 1;
 		uint8_t press : 1;
+		uint8_t press2 : 1;
 	};
 } Key[15];
 
@@ -45,6 +43,10 @@ union USB_JoystickReport_Input_t
 		uint8_t VendorSpec;
 	};
 	USB_JoystickReport_Input_t() {
+		Clear();
+	}
+	void Clear()
+	{
 		Button.hw = 0;
 		Hat = 8;
 		LX = 128;
@@ -149,28 +151,20 @@ void CALLBACK MidiInProc(HMIDIIN hMidiIn, UINT wMsg, DWORD_PTR dwInstance, DWORD
 	{
 		uint8_t data[3];
 		uint32_t timestamp;
-		data[0] = (dwParam1 & 0x000000FF) >> 0;
-		data[1] = (dwParam1 & 0x0000FF00) >> 8;
-		data[2] = (dwParam1 & 0x00FF0000) >> 16;
+		data[0] = (uint8_t)((dwParam1 & 0x000000FF) >> 0);
+		data[1] = (uint8_t)((dwParam1 & 0x0000FF00) >> 8);
+		data[2] = (uint8_t)((dwParam1 & 0x00FF0000) >> 16);
 		timestamp = (uint32_t)dwParam2;
-		//{
-		//	printf("%10d  %02X %02X %02X\n", timestamp, data[0], data[1], data[2]);
-		//}
-		if (data[0] == 0x80 || (data[0] == 0x90 && data[2] == 0x00)) {//note off
-			for (int i = 0; i < 15; i++) {
-				if (NoteNoList[i] == data[1]) {
-					Key[i].up = 1;
-					Key[i].down = 0;
-					TimeStamp = timestamp;
-				}
-			}
-		}
-		else if (data[0] == 0x90) {//note on
-			for (int i = 0; i < 15; i++) {
-				if (NoteNoList[i] == data[1]) {
-					Key[i].up = 0;
-					Key[i].down = 1;
-					TimeStamp = timestamp;
+
+		constexpr uint8_t ChMax = 3;
+		if ((data[0] & 0xF0) == 0x90 && data[2] != 0x00) {
+			uint8_t ch = data[0] & 0x0F;
+			if (ch <= ChMax) {
+				for (int i = 0; i < 15; i++) {
+					if (NoteNoList[i] == data[1]) {
+						Key[i].press = 1;
+						TimeStamp = timestamp;
+					}
 				}
 			}
 		}
@@ -209,35 +203,12 @@ void SetReport(int note)
 	}
 }
 
-void ClearReport(int note)
-{
-	switch (note) {
-	case 0: report.Button.ZL = 0; break;
-	case 1: report.Button.ZR = 0; break;
-	case 2: report.Hat = 8; break;
-	case 3: report.Button.B = 0; break;
-	case 4: report.Hat = 8; break;
-
-	case 5: report.Button.Y = 0; break;
-	case 6: report.Hat = 8; break;
-	case 7: report.Button.X = 0; break;
-	case 8: report.Hat = 8; break;
-	case 9: report.Button.A = 0; break;
-
-	case 10: report.Button.L = 0; break;
-	case 11: report.Button.R = 0; break;
-	case 12: report.LX = 128; break;
-	case 13: report.RX = 128; break;
-	case 14: report.LX = 128; break;
-	}
-}
-
 int main()
 {
 	std::printf("MidiIN Device List\n");
 	{
 		UINT num = ::midiInGetNumDevs();
-		for (int i = 0; i < num; i++) {
+		for (int i = 0; (UINT)i < num; i++) {
 			MIDIINCAPS caps;
 			if (MMSYSERR_NOERROR == ::midiInGetDevCaps(i, &caps, sizeof(MIDIINCAPS))) {
 				std::wprintf(L"%4d  %s\n", i, caps.szPname);
@@ -279,17 +250,9 @@ int main()
 		::Sleep(10);
 		bool co = false;
 		for (int i = 0; i < 15; i++) {
-			if (Key[i].up == 1) {
-				Key[i].press = 0;
+			if (Key[i].press == 1) {
 				co = true;
 			}
-			else if (Key[i].down == 1) {
-				Key[i].press = 1;
-				Key[i].cnt1 = 0;
-				co = true;
-			}
-			Key[i].up = 0;
-			Key[i].down = 0;
 		}
 		if (co) {
 			std::string str = "";
@@ -310,34 +273,30 @@ int main()
 			str += "\n";
 			printf(str.c_str());
 		}
-
-		constexpr int DTC = 8;
 		for (int i = 0; i < 15; i++) {
-			if (Key[i].cnt1 > 0) {
-				Key[i].cnt1++;
-				if (Key[i].cnt1 == DTC) {
-					ClearReport(i);
-				}
+			if (Key[i].press == 1) {
+				Key[i].press = 0;
+				Key[i].press2 = 1;
+				co = true;
 			}
 		}
-		{
-			bool noteon = true;
+		constexpr int DTC = 8;
+		static int ButtonPressCouter = 0;
+		if (ButtonPressCouter == 0) {
+			report.Clear();
 			for (int i = 0; i < 15; i++) {
-				if (0 < Key[i].cnt1 && Key[i].cnt1 < DTC) {
-					noteon = false;
+				if (Key[i].press2 == 1) {
+					Key[i].press2 = 0;
+					ButtonPressCouter = DTC;
+					SetReport(i);
 					break;
 				}
 			}
-			if (noteon == true) {
-				for (int i = 0; i < 15; i++) {
-					if (Key[i].press == 1 && Key[i].cnt1 == 0) {
-						SetReport(i);
-						Key[i].cnt1 = 1;
-						break;
-					}
-				}
-			}
 		}
+		else {
+			ButtonPressCouter--;
+		}
+
 		{
 			uint8_t buf[8];
 			buf[0] = 0x80 + ((report.B[0] & 0xFE) >> 1);
