@@ -12,52 +12,6 @@ union {
 	};
 } Key[15];
 
-union USB_JoystickReport_Input_t
-{
-	uint8_t B[8];
-	struct {
-		union {
-			uint16_t hw;
-			struct {
-				uint16_t Y : 1;
-				uint16_t B : 1;
-				uint16_t A : 1;
-				uint16_t X : 1;
-				uint16_t L : 1;
-				uint16_t R : 1;
-				uint16_t ZL : 1;
-				uint16_t ZR : 1;
-				uint16_t Minus : 1;
-				uint16_t Plus : 1;
-				uint16_t LClick : 1;
-				uint16_t RClick : 1;
-				uint16_t Home : 1;
-				uint16_t Capture : 1;
-			};
-		} Button;
-		uint8_t Hat;//0-7: 0:u 2:r 4:d 6:l 8 Neutral
-		uint8_t LX;
-		uint8_t LY;
-		uint8_t RX;
-		uint8_t RY;
-		uint8_t VendorSpec;
-	};
-	USB_JoystickReport_Input_t() {
-		Clear();
-	}
-	void Clear()
-	{
-		Button.hw = 0;
-		Hat = 8;
-		LX = 128;
-		LY = 128;
-		RX = 128;
-		RY = 128;
-		VendorSpec = 0;
-	}
-};
-USB_JoystickReport_Input_t report;
-
 namespace API {
 	class CSerialPort {
 	private:
@@ -138,6 +92,80 @@ namespace API {
 	};
 }
 
+//Gamepad button mapping
+// this XInput Switch PS3    DInput
+// B1   A      B      ×     2
+// B2   B      A      ○     3
+// B3   X      Y      □     1
+// B4   Y      X      △     4
+// L1   LB     L      L1     5
+// R1   RB     R      R1     6
+// L2   LT     ZL     L2     7
+// R2   RT     ZR     R2     8
+// S1   Back   -      Select 9
+// S2   Start  +      Start  10
+// L3   LS     LS     L3     11
+// R3   RS     Rs     R3     12
+// A1   Guide  Home          13
+// A2          Capture       14
+union GamepadState {
+	uint8_t B[11];
+	struct {
+		union {
+			uint16_t B;
+			struct {
+				uint16_t B1 : 1;
+				uint16_t B2 : 1;
+				uint16_t B3 : 1;
+				uint16_t B4 : 1;
+				uint16_t L1 : 1;
+				uint16_t R1 : 1;
+				uint16_t L2 : 1;
+				uint16_t R2 : 1;
+				uint16_t S1 : 1;
+				uint16_t S2 : 1;
+				uint16_t L3 : 1;
+				uint16_t R3 : 1;
+				uint16_t A1 : 1;
+				uint16_t A2 : 1;
+				uint16_t : 2;
+			};
+		} Button;
+		uint16_t Aux;
+		union {
+			uint8_t B;
+			struct {
+				uint8_t Up : 1;
+				uint8_t Down : 1;
+				uint8_t Left : 1;
+				uint8_t Right : 1;
+				uint8_t : 4;
+			};
+		} DPad;
+		uint8_t LX;
+		uint8_t LY;
+		uint8_t RX;
+		uint8_t RY;
+		uint8_t LT;
+		uint8_t RT;
+	};
+	void Clear() {
+		DPad.B = 0;
+		Button.B = 0;
+		Aux = 0;
+		LX = 128;
+		LY = 128;
+		RX = 128;
+		RY = 128;
+		LT = 0;
+		RT = 0;
+	}
+	GamepadState() {
+		Clear();
+	}
+};
+GamepadState report;
+
 void CALLBACK MidiInProc(HMIDIIN hMidiIn, UINT wMsg, DWORD_PTR dwInstance, DWORD_PTR dwParam1, DWORD_PTR dwParam2)
 {
 	switch (wMsg) {
@@ -156,7 +184,7 @@ void CALLBACK MidiInProc(HMIDIIN hMidiIn, UINT wMsg, DWORD_PTR dwInstance, DWORD
 		data[2] = (uint8_t)((dwParam1 & 0x00FF0000) >> 16);
 		timestamp = (uint32_t)dwParam2;
 
-		constexpr uint8_t ChMax = 3;
+		constexpr uint8_t ChMax = 15;
 		if ((data[0] & 0xF0) == 0x90 && data[2] != 0x00) {
 			uint8_t ch = data[0] & 0x0F;
 			if (ch <= ChMax) {
@@ -183,20 +211,20 @@ void CALLBACK MidiInProc(HMIDIIN hMidiIn, UINT wMsg, DWORD_PTR dwInstance, DWORD
 void SetReport(int note)
 {
 	switch (note) {
-	case 0: report.Button.ZL = 1; break;
-	case 1: report.Button.ZR = 1; break;
-	case 2: report.Hat = 4; break;
-	case 3: report.Button.B = 1; break;
-	case 4: report.Hat = 6; break;
+	case 0: report.LT = 255; break;
+	case 1: report.RT = 255; break;
+	case 2: report.DPad.Down = 1; break;
+	case 3: report.Button.B1 = 1; break;
+	case 4: report.DPad.Left = 1; break;
 
-	case 5: report.Button.Y = 1; break;
-	case 6: report.Hat = 0; break;
-	case 7: report.Button.X = 1; break;
-	case 8: report.Hat = 2; break;
-	case 9: report.Button.A = 1; break;
+	case 5: report.Button.B3 = 1; break;
+	case 6: report.DPad.Up = 1; break;
+	case 7: report.Button.B4 = 1; break;
+	case 8: report.DPad.Right = 1; break;
+	case 9: report.Button.B2 = 1; break;
 
-	case 10: report.Button.L = 1; break;
-	case 11: report.Button.R = 1; break;
+	case 10: report.Button.L1 = 1; break;
+	case 11: report.Button.R1 = 1; break;
 	case 12: report.LX = 0; break;
 	case 13: report.RX = 0; break;
 	case 14: report.LX = 255; break;
@@ -298,16 +326,23 @@ int main()
 		}
 
 		{
-			uint8_t buf[8];
-			buf[0] = 0x80 + ((report.B[0] & 0xFE) >> 1);
-			buf[1] = ((report.B[0] & 0x01) << 6) + ((report.B[1] & 0xFC) >> 2);
-			buf[2] = ((report.B[1] & 0x03) << 5) + ((report.B[2] & 0xF8) >> 3);
-			buf[3] = ((report.B[2] & 0x07) << 4) + ((report.B[3] & 0xF0) >> 4);
-			buf[4] = ((report.B[3] & 0x0F) << 3) + ((report.B[4] & 0xE0) >> 5);
-			buf[5] = ((report.B[4] & 0x1F) << 2) + ((report.B[5] & 0xC0) >> 6);
-			buf[6] = ((report.B[5] & 0x3F) << 1) + ((report.B[6] & 0x80) >> 7);
-			buf[7] = ((report.B[6] & 0x7F) << 0);
-			if (sp.Write(buf, 8) != 0) {
+			static uint8_t cnt = 0;
+			uint8_t buf[14];//Sync[1] Size[1] Header[1] Data[11] ※Size=Header+Data
+			buf[0] = 0b1010'0000 + (cnt & 0x0F); cnt++;
+			buf[1] = 12;
+			buf[2] = 0xC0;
+			buf[3] = report.B[0];
+			buf[4] = report.B[1];
+			buf[5] = report.B[2];
+			buf[6] = report.B[3];
+			buf[7] = report.B[4];
+			buf[8] = report.B[5];
+			buf[9] = report.B[6];
+			buf[10] = report.B[7];
+			buf[11] = report.B[8];
+			buf[12] = report.B[9];
+			buf[13] = report.B[10];
+			if (sp.Write(buf, 14) != 0) {
 				std::cout << "Error 02" << std::endl;
 				break;
 			}

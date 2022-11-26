@@ -1,4 +1,4 @@
-
+﻿
 
 8c  nn  vv  :  note on
 9c  nn  vv  :  note off
@@ -21,7 +21,10 @@ C6  84
 
 
 
-ZL  ZR  ��  �a  ��
-�x  ��  �w  ��  �`
-�k  �q  <L  <R  L>
+ZL  ZR  ↓  Ｂ  ←
+Ｙ  ↑  Ｘ  →  Ａ
+Ｌ  Ｒ  <L  <R  L>
 
+L2  R2  ↓  B1  ←
+B3  ↑  B4  →  B2
+L1  R1  <L  <R  L>

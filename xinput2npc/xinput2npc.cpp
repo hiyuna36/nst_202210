@@ -80,44 +80,76 @@ namespace API {
 	};
 }
 
-union USB_JoystickReport_Input_t
-{
-	uint8_t B[8];
+//Gamepad button mapping
+// this XInput Switch PS3    DInput
+// B1   A      B      ×     2
+// B2   B      A      ○     3
+// B3   X      Y      □     1
+// B4   Y      X      △     4
+// L1   LB     L      L1     5
+// R1   RB     R      R1     6
+// L2   LT     ZL     L2     7
+// R2   RT     ZR     R2     8
+// S1   Back   -      Select 9
+// S2   Start  +      Start  10
+// L3   LS     LS     L3     11
+// R3   RS     Rs     R3     12
+// A1   Guide  Home          13
+// A2          Capture       14
+union GamepadState {
+	uint8_t B[11];
 	struct {
 		union {
-			uint16_t hw;
+			uint16_t B;
 			struct {
-				uint16_t Y : 1;
-				uint16_t B : 1;
-				uint16_t A : 1;
-				uint16_t X : 1;
-				uint16_t L : 1;
-				uint16_t R : 1;
-				uint16_t ZL : 1;
-				uint16_t ZR : 1;
-				uint16_t Minus : 1;
-				uint16_t Plus : 1;
-				uint16_t LClick : 1;
-				uint16_t RClick : 1;
-				uint16_t Home : 1;
-				uint16_t Capture : 1;
+				uint16_t B1 : 1;
+				uint16_t B2 : 1;
+				uint16_t B3 : 1;
+				uint16_t B4 : 1;
+				uint16_t L1 : 1;
+				uint16_t R1 : 1;
+				uint16_t L2 : 1;
+				uint16_t R2 : 1;
+				uint16_t S1 : 1;
+				uint16_t S2 : 1;
+				uint16_t L3 : 1;
+				uint16_t R3 : 1;
+				uint16_t A1 : 1;
+				uint16_t A2 : 1;
+				uint16_t : 2;
 			};
 		} Button;
-		uint8_t Hat;//0-7: 0:u 2:r 4:d 6:l 8 Neutral
+		uint16_t Aux;
+		union {
+			uint8_t B;
+			struct {
+				uint8_t Up : 1;
+				uint8_t Down : 1;
+				uint8_t Left : 1;
+				uint8_t Right : 1;
+				uint8_t : 4;
+			};
+		} DPad;
 		uint8_t LX;
 		uint8_t LY;
 		uint8_t RX;
 		uint8_t RY;
-		uint8_t VendorSpec;
+		uint8_t LT;
+		uint8_t RT;
 	};
-	USB_JoystickReport_Input_t() {
-		Button.hw = 0;
-		Hat = 8;
+	void Clear() {
+		DPad.B = 0;
+		Button.B = 0;
+		Aux = 0;
 		LX = 128;
 		LY = 128;
 		RX = 128;
 		RY = 128;
-		VendorSpec = 0;
+		LT = 0;
+		RT = 0;
+	}
+	GamepadState() {
+		Clear();
 	}
 };
 
@@ -147,50 +179,52 @@ int main()
 
 	while (true) {
 		XINPUT_STATE State;
-		USB_JoystickReport_Input_t JoystickReport;
+		GamepadState state;
 		if (ERROR_SUCCESS == ::XInputGetState(0, &State)) {
-			if (State.Gamepad.wButtons & XINPUT_GAMEPAD_Y) JoystickReport.Button.X = 1;
-			if (State.Gamepad.wButtons & XINPUT_GAMEPAD_B) JoystickReport.Button.A = 1;
-			if (State.Gamepad.wButtons & XINPUT_GAMEPAD_A) JoystickReport.Button.B = 1;
-			if (State.Gamepad.wButtons & XINPUT_GAMEPAD_X) JoystickReport.Button.Y = 1;
-			if (State.Gamepad.wButtons & XINPUT_GAMEPAD_LEFT_SHOULDER) JoystickReport.Button.L = 1;
-			if (State.Gamepad.wButtons & XINPUT_GAMEPAD_RIGHT_SHOULDER) JoystickReport.Button.R = 1;
-			if (State.Gamepad.bLeftTrigger > 128) JoystickReport.Button.ZL = 1;
-			if (State.Gamepad.bRightTrigger > 128) JoystickReport.Button.ZR = 1;
-			if (State.Gamepad.wButtons & XINPUT_GAMEPAD_BACK) JoystickReport.Button.Minus = 1;
-			if (State.Gamepad.wButtons & XINPUT_GAMEPAD_START) JoystickReport.Button.Plus = 1;
-			if (State.Gamepad.wButtons & XINPUT_GAMEPAD_LEFT_THUMB) JoystickReport.Button.LClick = 1;
-			if (State.Gamepad.wButtons & XINPUT_GAMEPAD_RIGHT_THUMB) JoystickReport.Button.RClick = 1;
-			constexpr WORD XINPUT_GAMEPAD_DPAD = XINPUT_GAMEPAD_DPAD_UP | XINPUT_GAMEPAD_DPAD_DOWN | XINPUT_GAMEPAD_DPAD_LEFT | XINPUT_GAMEPAD_DPAD_RIGHT;
-			if ((State.Gamepad.wButtons & XINPUT_GAMEPAD_DPAD) == XINPUT_GAMEPAD_DPAD_UP) JoystickReport.Hat = 0;
-			else if ((State.Gamepad.wButtons & XINPUT_GAMEPAD_DPAD) == (XINPUT_GAMEPAD_DPAD_UP | XINPUT_GAMEPAD_DPAD_RIGHT)) JoystickReport.Hat = 1;
-			else if ((State.Gamepad.wButtons & XINPUT_GAMEPAD_DPAD) == XINPUT_GAMEPAD_DPAD_RIGHT) JoystickReport.Hat = 2;
-			else if ((State.Gamepad.wButtons & XINPUT_GAMEPAD_DPAD) == (XINPUT_GAMEPAD_DPAD_RIGHT | XINPUT_GAMEPAD_DPAD_DOWN)) JoystickReport.Hat = 3;
-			else if ((State.Gamepad.wButtons & XINPUT_GAMEPAD_DPAD) == XINPUT_GAMEPAD_DPAD_DOWN) JoystickReport.Hat = 4;
-			else if ((State.Gamepad.wButtons & XINPUT_GAMEPAD_DPAD) == (XINPUT_GAMEPAD_DPAD_DOWN | XINPUT_GAMEPAD_DPAD_LEFT)) JoystickReport.Hat = 5;
-			else if ((State.Gamepad.wButtons & XINPUT_GAMEPAD_DPAD) == XINPUT_GAMEPAD_DPAD_LEFT) JoystickReport.Hat = 6;
-			else if ((State.Gamepad.wButtons & XINPUT_GAMEPAD_DPAD) == (XINPUT_GAMEPAD_DPAD_LEFT | XINPUT_GAMEPAD_DPAD_UP)) JoystickReport.Hat = 7;
-			JoystickReport.LX = (uint8_t)((State.Gamepad.sThumbLX >> 8) + 128);
-			JoystickReport.LY = (uint8_t)(255 - ((State.Gamepad.sThumbLY >> 8) + 128));
-			JoystickReport.RX = (uint8_t)((State.Gamepad.sThumbRX >> 8) + 128);
-			JoystickReport.RY = (uint8_t)(255 - ((State.Gamepad.sThumbRY >> 8) + 128));
+			if (State.Gamepad.wButtons & XINPUT_GAMEPAD_A) state.Button.B1 = 1;
+			if (State.Gamepad.wButtons & XINPUT_GAMEPAD_B) state.Button.B2 = 1;
+			if (State.Gamepad.wButtons & XINPUT_GAMEPAD_X) state.Button.B3 = 1;
+			if (State.Gamepad.wButtons & XINPUT_GAMEPAD_Y) state.Button.B4 = 1;
+			if (State.Gamepad.wButtons & XINPUT_GAMEPAD_LEFT_SHOULDER) state.Button.L1 = 1;
+			if (State.Gamepad.wButtons & XINPUT_GAMEPAD_RIGHT_SHOULDER) state.Button.R1 = 1;
+			if (State.Gamepad.wButtons & XINPUT_GAMEPAD_BACK) state.Button.S1 = 1;
+			if (State.Gamepad.wButtons & XINPUT_GAMEPAD_START) state.Button.S2 = 1;
+			if (State.Gamepad.wButtons & XINPUT_GAMEPAD_LEFT_THUMB) state.Button.L3 = 1;
+			if (State.Gamepad.wButtons & XINPUT_GAMEPAD_RIGHT_THUMB) state.Button.R3 = 1;
+			state.LT = State.Gamepad.bLeftTrigger;
+			state.RT = State.Gamepad.bRightTrigger;
+			if (State.Gamepad.wButtons & XINPUT_GAMEPAD_DPAD_UP) state.DPad.Up = 1;
+			if (State.Gamepad.wButtons & XINPUT_GAMEPAD_DPAD_DOWN) state.DPad.Down = 1;
+			if (State.Gamepad.wButtons & XINPUT_GAMEPAD_DPAD_LEFT) state.DPad.Left = 1;
+			if (State.Gamepad.wButtons & XINPUT_GAMEPAD_DPAD_RIGHT) state.DPad.Right = 1;
+			state.LX = (uint8_t)((State.Gamepad.sThumbLX >> 8) + 128);
+			state.LY = (uint8_t)(255 - ((State.Gamepad.sThumbLY >> 8) + 128));
+			state.RX = (uint8_t)((State.Gamepad.sThumbRX >> 8) + 128);
+			state.RY = (uint8_t)(255 - ((State.Gamepad.sThumbRY >> 8) + 128));
 		}
 		{
-			if (::GetAsyncKeyState(VK_RCONTROL) & 0x8000) {
-				JoystickReport.Button.Home = 1;
+			if (::GetAsyncKeyState(VK_RCONTROL) & 0x8000) {//XInputでは取得できないからキーボードに割り当てる
+				state.Button.A1 = 1;
 			}
 		}
 		{
-			uint8_t buf[8];
-			buf[0] = 0x80 + ((JoystickReport.B[0] & 0xFE) >> 1);
-			buf[1] = ((JoystickReport.B[0] & 0x01) << 6) + ((JoystickReport.B[1] & 0xFC) >> 2);
-			buf[2] = ((JoystickReport.B[1] & 0x03) << 5) + ((JoystickReport.B[2] & 0xF8) >> 3);
-			buf[3] = ((JoystickReport.B[2] & 0x07) << 4) + ((JoystickReport.B[3] & 0xF0) >> 4);
-			buf[4] = ((JoystickReport.B[3] & 0x0F) << 3) + ((JoystickReport.B[4] & 0xE0) >> 5);
-			buf[5] = ((JoystickReport.B[4] & 0x1F) << 2) + ((JoystickReport.B[5] & 0xC0) >> 6);
-			buf[6] = ((JoystickReport.B[5] & 0x3F) << 1) + ((JoystickReport.B[6] & 0x80) >> 7);
-			buf[7] = ((JoystickReport.B[6] & 0x7F) << 0);
-			if (sp.Write(buf, 8) != 0) {
+			static uint8_t cnt = 0;
+			uint8_t buf[14];//Sync[1] Size[1] Header[1] Data[11] ※Size=Header+Data
+			buf[0] = 0b1010'0000 + (cnt & 0x0F); cnt++;
+			buf[1] = 12;
+			buf[2] = 0xC0;
+			buf[3] = state.B[0];
+			buf[4] = state.B[1];
+			buf[5] = state.B[2];
+			buf[6] = state.B[3];
+			buf[7] = state.B[4];
+			buf[8] = state.B[5];
+			buf[9] = state.B[6];
+			buf[10] = state.B[7];
+			buf[11] = state.B[8];
+			buf[12] = state.B[9];
+			buf[13] = state.B[10];
+			if (sp.Write(buf, 14) != 0) {
 				std::cout << "Error 02" << std::endl;
 				break;
 			}
