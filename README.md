@@ -48,6 +48,15 @@ MIDIファイルを演奏させる場合
 |*3 Picoprobe|Raspberry Pi Pico(左)||USB-UART変換として使用する|
 |*2 PROCTRL001|Raspberry Pi Pico(右)|https://github.com/hiyuna36/proctrl001_022210||
 
+## midiin2npcsky2
+
+MIDI INからの信号を元にSwitch版「Sky 星を紡ぐ子どもたち」の楽器を演奏するプログラムです
+本ソフトウェアはTGCの公式のものではありません。
+
+midiin2npcskyからの変更点
+
+* 和音の処理を同時押し可能なボタンの組み合わせの場合は同時押しするように変更しました。
+
 ## settings
 
 上記プログラムで使用する通信ポートの設定を行うプログラムです。
