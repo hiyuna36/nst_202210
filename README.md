@@ -29,6 +29,7 @@ PC側に接続されたXInput対応のゲームパッドでSwitchを操作する
 ## midiin2npcsky
 
 MIDI INからの信号を元にSwitch版「Sky 星を紡ぐ子どもたち」の楽器を演奏するプログラムです
+
 本ソフトウェアはTGCの公式のものではありません。
 
 * C4～C6の白鍵を割り当てています。
@@ -47,6 +48,26 @@ MIDIファイルを演奏させる場合
 |*1 midiin2npcsky|PC|（本ソフトウェア）||
 |*3 Picoprobe|Raspberry Pi Pico(左)||USB-UART変換として使用する|
 |*2 PROCTRL001|Raspberry Pi Pico(右)|https://github.com/hiyuna36/proctrl001_022210||
+
+## midiin2npcsky2
+
+MIDI INからの信号を元にSwitch版「Sky 星を紡ぐ子どもたち」の楽器を演奏するプログラムです
+
+本ソフトウェアはTGCの公式のものではありません。
+
+midiin2npcskyからの変更点
+
+* 和音の処理を同時押し可能なボタンの組み合わせの場合は同時押しするように変更しました。
+
+## midiin2npcsky2aurora
+
+MIDI INからの信号を元にSwitch版「Sky 星を紡ぐ子どもたち」の楽器を演奏するプログラムです
+
+本ソフトウェアはTGCの公式のものではありません。
+
+midiin2npcsky2からの変更点
+
+* 「AURORAの声」の長押しに対応しました
 
 ## settings
 
